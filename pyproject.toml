@@ -42,3 +42,6 @@ src = ["src", "scripts", "tests", "app"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/skin_lesion/api/main.py" = ["B008"]  # FastAPI File(...) defaults are idiomatic

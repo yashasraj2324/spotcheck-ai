@@ -1,0 +1,59 @@
+# Plain EfficientNet-B3 baseline: no Transformer block, standard cross-entropy, no imbalance handling.
+seed: 42
+run_name: baseline-effnet-b3
+
+data:
+  root: data/HAM10000            # overridden by env HAM10000_DIR
+  metadata: data/processed/metadata.csv
+  img_size: 300
+  batch_size: 32
+  num_workers: 4
+  subset: null                   # int: cap each split to N images (smoke tests)
+
+split:
+  seed: 42
+  val_frac: 0.15
+  test_frac: 0.15
+
+preprocess:
+  hair_removal: true
+  hair_kernel: 17
+  clahe: true
+  clahe_clip: 2.0
+  clahe_grid: 8
+
+augment:
+  hflip: true
+  vflip: true
+  rotation: 20
+  brightness: 0.2
+  contrast: 0.2
+  saturation: 0.2
+
+model:
+  name: baseline                 # baseline | hybrid
+  backbone: efficientnet_b3
+  pretrained: true
+  num_classes: 7
+  dropout: 0.3
+  embed_dim: 256                 # hybrid only
+  num_blocks: 2                  # hybrid only
+  num_heads: 4                   # hybrid only
+
+imbalance:
+  class_weighted_loss: false
+  weighted_sampler: false
+
+train:
+  epochs: 30
+  warmup_epochs: 2               # backbone frozen for these epochs
+  backbone_lr: 1.0e-4
+  head_lr: 1.0e-3
+  weight_decay: 1.0e-5
+  amp: true
+  monitor: val_macro_f1
+  early_stopping_patience: 6
+  checkpoint_dir: checkpoints
+
+mlflow:
+  experiment: skin-lesion-baseline

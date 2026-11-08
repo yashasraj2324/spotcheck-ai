@@ -14,10 +14,11 @@ venv/
 !.env.example
 
 # Data, checkpoints, experiment output
-data/
-checkpoints/
-mlruns/
-outputs/
+/data/
+/checkpoints/
+/mlruns/
+mlflow.db
+/outputs/
 *.pth
 *.pt
 *.ckpt
@@ -27,3 +28,4 @@ outputs/
 .vscode/
 Thumbs.db
 .DS_Store
+*.log

@@ -1,0 +1,10 @@
+# Transformer encoder + SE block on top of EfficientNet-B3 features. Inherits everything else.
+base: baseline.yaml
+
+run_name: hybrid-effnet-b3
+
+model:
+  name: hybrid
+
+mlflow:
+  experiment: skin-lesion-hybrid
