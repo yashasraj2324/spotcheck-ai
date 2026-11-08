@@ -34,7 +34,11 @@ def build_metadata(root: str | Path) -> pd.DataFrame:
     if unknown:
         raise ValueError(f"Unknown diagnosis labels: {sorted(unknown)}")
 
-    index = {p.stem: p.relative_to(root).as_posix() for d in IMAGE_DIRS for p in (root / d).glob("*.jpg")}
+    index = {
+        p.stem: p.relative_to(root).as_posix()
+        for d in IMAGE_DIRS
+        for p in (root / d).glob("*.jpg")
+    }
     df["path"] = df["image_id"].map(index)
     n_missing = int(df["path"].isna().sum())
     if n_missing:

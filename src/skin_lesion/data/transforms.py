@@ -1,4 +1,4 @@
-"""Train/eval transform pipelines. Preprocessing runs after resize, identically in training and serving."""
+"""Train/eval transforms. Preprocessing runs after resize, identically in training and serving."""
 
 from __future__ import annotations
 
