@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skin-lesion"
+version = "0.1.0"
+description = "Research prototype: HAM10000 skin-lesion classifier with MLflow tracking, FastAPI and Grad-CAM. Not for medical use."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2",
+    "torchvision>=0.17",
+    "timm>=0.9",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "pyyaml",
+    "pillow",
+    "opencv-python-headless",
+    "matplotlib",
+    "mlflow>=2.9",
+]
+
+[project.optional-dependencies]
+api = ["fastapi", "uvicorn", "python-multipart", "pydantic-settings"]
+ui = ["streamlit", "requests"]
+azure = ["azureml-mlflow", "azure-ai-ml", "azure-identity"]
+dev = ["pytest", "httpx", "ruff"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "scripts", "tests", "app"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
