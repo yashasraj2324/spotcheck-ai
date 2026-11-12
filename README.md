@@ -41,6 +41,16 @@ Smoke test: `python scripts/train.py --set data.subset=64 --set train.epochs=1`.
 
 MLflow logs to a local SQLite file (`mlflow.db`) unless `MLFLOW_TRACKING_URI` is set (for example to an Azure ML workspace URI; see `docs/`).
 
+**Logging to Azure ML: install with the `azure` extra.**
+
+```bash
+pip install -e ".[azure]"
+```
+
+The extra pins `mlflow==2.22.5` (and caps `sqlalchemy<2.1`, which MLflow 2.22.5's SQLite store needs). The reason: with MLflow 3.18 and azureml-mlflow 1.62.0.post6, artifact upload to Azure ML fails with a `TypeError`; with MLflow 2.22.5 it works. A plain `pip install -e .` installs MLflow 3.x, which is fine for local tracking only. Model logging in the code works on both MLflow 2.x and 3.x.
+
+**Resuming training:** every epoch writes `train.checkpoint_dir/last.pth` (model, optimizer, epoch, best score and weights, saved config, MLflow run id). Set `train.resume=true` (e.g. `--set train.resume=true`) to continue from the next epoch in the same MLflow run. Resume refuses to start if the checkpoint's saved config differs from the current config (only `train.resume` may differ), and it never resumes a checkpoint from a completed run. If `AZURE_STORAGE_CONNECTION_STRING` is set, the checkpoint is uploaded to the Blob container `checkpoints` after every epoch, and downloaded from there on resume when no local file exists.
+
 ## Configuration
 
 Everything tunable lives in `configs/`. `hybrid.yaml` inherits `baseline.yaml`. Any value can be overridden on the command line with `--set a.b=value`. Class-imbalance handling is switched independently with `imbalance.class_weighted_loss` and `imbalance.weighted_sampler`.
