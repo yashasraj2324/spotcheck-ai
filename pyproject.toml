@@ -25,7 +25,16 @@ dependencies = [
 [project.optional-dependencies]
 api = ["fastapi", "uvicorn", "python-multipart", "pydantic-settings"]
 ui = ["streamlit", "requests"]
-azure = ["azureml-mlflow", "azure-ai-ml", "azure-identity"]
+# MLflow 3.x breaks artifact upload against Azure ML, so the azure extra pins MLflow 2.x.
+# MLflow 2.22.5's SQLite store cannot import from SQLAlchemy >= 2.1, hence the cap.
+azure = [
+    "mlflow==2.22.5",
+    "sqlalchemy<2.1",
+    "azureml-mlflow",
+    "azure-ai-ml",
+    "azure-identity",
+    "azure-storage-blob",
+]
 dev = ["pytest", "httpx", "ruff"]
 
 [tool.setuptools.packages.find]

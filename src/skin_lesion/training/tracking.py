@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import subprocess
 
 import mlflow
+import mlflow.pytorch
+import numpy as np
+import torch
 
 from skin_lesion.config import Config, flatten
 
@@ -45,3 +49,15 @@ def log_run_params(cfg: Config) -> None:
             "dataset_asset_version": os.environ.get("DATASET_ASSET_VERSION", "unset"),
         }
     )
+
+
+def log_pytorch_model(model: torch.nn.Module, img_size: int) -> None:
+    """Log the model with an input example (so MLflow records a signature) on MLflow 2.x and 3.x.
+
+    MLflow 3.x takes `name=`; 2.x only knows `artifact_path=`, so pick by the installed signature.
+    """
+    model = model.cpu().eval()
+    example = np.zeros((1, 3, img_size, img_size), dtype=np.float32)
+    params = inspect.signature(mlflow.pytorch.log_model).parameters
+    name_kwarg = {"name": "model"} if "name" in params else {"artifact_path": "model"}
+    mlflow.pytorch.log_model(model, input_example=example, **name_kwarg)

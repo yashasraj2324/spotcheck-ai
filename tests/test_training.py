@@ -1,9 +1,11 @@
+import mlflow
 import numpy as np
 import pandas as pd
+import pytest
 import torch
-from PIL import Image
 
 from skin_lesion.data.constants import CLASSES
+from skin_lesion.training import checkpointing
 from skin_lesion.training.losses import build_criterion
 from skin_lesion.training.metrics import compute_metrics
 from skin_lesion.training.trainer import run_training
@@ -30,25 +32,24 @@ def test_no_weights_by_default(tiny_cfg):
     assert crit.weight is None
 
 
-def test_end_to_end_training_on_synthetic_data(tiny_cfg, tmp_path, monkeypatch):
-    rng = np.random.default_rng(0)
-    rows = []
-    for i in range(42):
-        arr = rng.integers(0, 255, (80, 80, 3), dtype=np.uint8)
-        Image.fromarray(arr).save(tmp_path / f"{i}.jpg")
-        split = ("train", "val", "test")[i % 3]
-        rows.append({"path": f"{i}.jpg", "label": i % 7, "split": split})
-    pd.DataFrame(rows).to_csv(tmp_path / "meta.csv", index=False)
-
-    monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}")
-    monkeypatch.setenv("HAM10000_DIR", str(tmp_path))
-    tiny_cfg["data"].update(metadata=str(tmp_path / "meta.csv"), batch_size=8, num_workers=0)
-    tiny_cfg["train"].update(
-        epochs=1, warmup_epochs=0, amp=False, checkpoint_dir=str(tmp_path / "ck")
-    )
-    tiny_cfg["preprocess"]["hair_removal"] = False
-
-    result = run_training(tiny_cfg)
+def test_end_to_end_training_on_synthetic_data(synthetic_cfg, tmp_path):
+    result = run_training(synthetic_cfg)
     assert 0.0 <= result["test"]["macro_f1"] <= 1.0
     assert (tmp_path / "ck" / "best.pth").is_file()
     assert result["run_id"]
+
+    # per-epoch checkpoint holds everything needed to resume
+    state = checkpointing.load_epoch_checkpoint(
+        checkpointing.checkpoint_path(synthetic_cfg), torch.device("cpu")
+    )
+    expected = {"epoch", "model", "optimizer", "scheduler", "best_score", "best_state", "run_id"}
+    assert expected <= set(state)
+    assert state["epoch"] == 0 and state["run_id"] == result["run_id"]
+    assert state["completed"] is True  # run finished, so this checkpoint must not be resumed
+    synthetic_cfg["train"]["resume"] = True
+    with pytest.raises(RuntimeError, match="completed run"):
+        checkpointing.find_resume_state(synthetic_cfg, torch.device("cpu"))
+
+    # the packaged model carries a signature (from the logged input example)
+    info = mlflow.models.get_model_info(f"runs:/{result['run_id']}/model")
+    assert info.signature is not None

@@ -54,6 +54,11 @@ train:
   monitor: val_macro_f1
   early_stopping_patience: 6
   checkpoint_dir: checkpoints
+  # Per-epoch checkpoint goes to checkpoint_dir/last.pth; it is also uploaded to this Blob
+  # container when env AZURE_STORAGE_CONNECTION_STRING is set.
+  checkpoint_container: checkpoints
+  # true: continue from last.pth (or the Blob copy) and resume the same MLflow run.
+  resume: false
 
 mlflow:
   experiment: skin-lesion-baseline
